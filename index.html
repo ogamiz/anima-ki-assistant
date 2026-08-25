@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#17171b" />
+  <title>Anima · Asistente de Ki</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">ANIMA BEYOND FANTASY</p>
+        <h1>Asistente de Ki</h1>
+      </div>
+      <div class="top-actions">
+        <button id="importBtn" class="btn ghost">Cargar JSON</button>
+        <button id="exportBtn" class="btn ghost">Guardar JSON</button>
+        <input id="importInput" type="file" accept="application/json,.json" hidden />
+      </div>
+    </header>
+
+    <main>
+      <section class="panel character-panel">
+        <div class="panel-head wrap-head">
+          <div>
+            <span class="section-kicker">PERSONAJE</span>
+            <input id="characterName" class="character-name" type="text" value="Personaje" aria-label="Nombre del personaje" />
+          </div>
+          <div class="round-box">
+            <span>ASALTO</span>
+            <strong id="roundValue">1</strong>
+          </div>
+        </div>
+
+        <div id="kiGrid" class="ki-grid" aria-label="Características, acumulación y Ki concentrado"></div>
+      </section>
+
+      <section class="dashboard-grid">
+        <article class="panel reserve-panel">
+          <div class="panel-head">
+            <div>
+              <span class="section-kicker">RESERVA</span>
+              <h2>Ki</h2>
+            </div>
+            <button id="adjustKiBtn" class="btn compact">± Ajustar Ki</button>
+          </div>
+
+          <div class="reserve-main">
+            <div class="reserve-number"><strong id="freeKi">0</strong><span>disponible</span></div>
+            <div class="reserve-total">de <strong id="totalKi">0</strong> Ki</div>
+          </div>
+
+          <div class="reserve-breakdown">
+            <div><span>Concentrado</span><strong id="concentratedKi">0</strong></div>
+            <div><span>Gastado</span><strong id="spentKi">0</strong></div>
+            <div><span>Mantenimiento</span><strong id="maintenancePerRound">0/as</strong></div>
+            <div><span>Recuperación</span><strong id="recoveryPerRound">0/as</strong></div>
+          </div>
+
+          <div class="max-ki-control">
+            <span>Reserva máxima</span>
+            <div class="stepper small-stepper">
+              <button data-total-delta="-1" aria-label="Reducir Ki máximo">−</button>
+              <input id="maxKiInline" class="max-ki-input" type="number" min="0" step="1" value="0" inputmode="numeric" aria-label="Reserva máxima de Ki" />
+              <button data-total-delta="1" aria-label="Aumentar Ki máximo">+</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel turn-panel">
+          <div class="panel-head">
+            <div>
+              <span class="section-kicker">ASALTO</span>
+              <h2>Acumulación</h2>
+            </div>
+          </div>
+
+          <div class="accum-mode">
+            <label class="radio-line"><input type="radio" name="accumMode" value="full" checked /> Completa</label>
+            <label id="halfModeLabel" class="radio-line"><input type="radio" name="accumMode" value="half" /> ½ acumulación</label>
+          </div>
+
+          <label class="switch-line">
+            <input id="fullAccumulationAdvantage" type="checkbox" />
+            <span class="switch"></span>
+            <span><strong>Acumulación Plena</strong><small>Impide seleccionar acumulación reducida.</small></span>
+          </label>
+
+          <div class="turn-actions">
+            <button id="accumulateBtn" class="btn primary big">Acumular y avanzar</button>
+            <button id="advanceBtn" class="btn secondary big">Avanzar sin acumular</button>
+          </div>
+        </article>
+
+        <article class="panel effects-panel">
+          <div class="panel-head">
+            <div>
+              <span class="section-kicker">EFECTOS</span>
+              <h2>Por asalto</h2>
+            </div>
+          </div>
+
+          <label class="switch-line">
+            <input id="agonEnabled" type="checkbox" />
+            <span class="switch"></span>
+            <span><strong>Agon · Límite de la Guerra</strong><small>Recupera 1 Ki gastado por asalto mientras esté activo.</small></span>
+          </label>
+
+          <div class="agon-counter">
+            <span>Recuperado hoy</span>
+            <strong><span id="agonRecovered">0</span> / <span id="agonMax">80</span></strong>
+            <button id="resetAgonBtn" class="text-btn">Reiniciar contador</button>
+          </div>
+        </article>
+      </section>
+
+      <section class="panel techniques-panel">
+        <div class="panel-head wrap-head">
+          <div>
+            <span class="section-kicker">TÉCNICAS</span>
+            <h2>Repertorio</h2>
+          </div>
+          <button id="addTechniqueBtn" class="btn primary">＋ Añadir técnica</button>
+        </div>
+        <div id="techniquesList" class="techniques-list"></div>
+      </section>
+
+      <section class="panel history-panel">
+        <div class="panel-head wrap-head">
+          <div>
+            <span class="section-kicker">REGISTRO</span>
+            <h2>Historial</h2>
+          </div>
+          <button id="clearHistoryBtn" class="btn ghost compact">Limpiar</button>
+        </div>
+        <div id="historyList" class="history-list"></div>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="techniqueDialog" class="dialog">
+    <form id="techniqueForm" method="dialog">
+      <div class="dialog-head">
+        <div>
+          <span class="section-kicker">TÉCNICA</span>
+          <h2 id="techniqueDialogTitle">Añadir técnica</h2>
+        </div>
+        <button type="button" class="icon-btn" data-close-dialog="techniqueDialog" aria-label="Cerrar">×</button>
+      </div>
+
+      <input id="techniqueId" type="hidden" />
+      <div class="form-grid two">
+        <label>Nombre<input id="techniqueName" type="text" required placeholder="Estocada del Alba" /></label>
+        <label>Nivel<select id="techniqueLevel"><option>1</option><option>2</option><option>3</option></select></label>
+      </div>
+
+      <fieldset>
+        <legend>Coste de activación</legend>
+        <div id="techniqueCosts" class="cost-grid"></div>
+      </fieldset>
+
+      <label class="switch-line form-switch">
+        <input id="techniqueMaintained" type="checkbox" />
+        <span class="switch"></span>
+        <span><strong>Técnica mantenida</strong><small>La técnica quedará activa tras ejecutarse.</small></span>
+      </label>
+
+      <fieldset id="maintenanceFieldset" hidden>
+        <legend>Ki de mantenimiento por asalto</legend>
+        <div id="maintenanceCosts" class="cost-grid"></div>
+      </fieldset>
+
+      <div class="dialog-actions">
+        <button type="button" class="btn ghost" data-close-dialog="techniqueDialog">Cancelar</button>
+        <button type="submit" class="btn primary">Guardar técnica</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="adjustKiDialog" class="dialog small-dialog">
+    <form id="adjustKiForm" method="dialog">
+      <div class="dialog-head">
+        <div><span class="section-kicker">RESERVA</span><h2>Ajustar Ki</h2></div>
+        <button type="button" class="icon-btn" data-close-dialog="adjustKiDialog" aria-label="Cerrar">×</button>
+      </div>
+      <div class="segmented">
+        <label><input type="radio" name="adjustType" value="spend" checked /><span>Gastar</span></label>
+        <label><input type="radio" name="adjustType" value="recover" /><span>Recuperar</span></label>
+      </div>
+      <label>Cantidad<input id="adjustAmount" type="number" min="1" value="1" required /></label>
+      <label>Motivo <span class="muted">(opcional)</span><input id="adjustReason" type="text" placeholder="Extrusión de presencia" /></label>
+      <div class="dialog-actions">
+        <button type="button" class="btn ghost" data-close-dialog="adjustKiDialog">Cancelar</button>
+        <button type="submit" class="btn primary">Aplicar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+{
+  "name": "Anima · Asistente de Ki",
+  "short_name": "Anima Ki",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#111216",
+  "theme_color": "#17171b",
+  "lang": "es"
+}
