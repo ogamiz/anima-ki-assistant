@@ -35,7 +35,10 @@ main { display:grid; gap:16px; }
 .wrap-head { flex-wrap:wrap; }
 .character-name { display:block; margin-top:3px; width:min(460px,80vw); color:var(--text); background:transparent; border:0; border-bottom:1px solid transparent; font-weight:800; font-size:clamp(1.3rem,2.5vw,2rem); padding:2px 0; outline:none; }
 .character-name:focus { border-color:var(--violet); }
+.round-controls { display:flex; align-items:stretch; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
 .round-box { text-align:center; min-width:92px; padding:10px 16px; background:var(--panel-2); border:1px solid var(--line); border-radius:14px; }
+.round-action-buttons { display:grid; grid-template-columns:1fr; gap:6px; min-width:112px; }
+.round-action-buttons .btn { min-height:38px; }
 .round-box span { display:block; color:var(--muted); font-size:.68rem; font-weight:800; letter-spacing:.12em; }
 .round-box strong { display:block; font-size:1.7rem; margin-top:2px; }
 .btn { border:1px solid var(--line); border-radius:12px; padding:11px 14px; background:var(--panel-3); color:var(--text); font-weight:750; cursor:pointer; transition:.15s ease; }
@@ -44,6 +47,7 @@ main { display:grid; gap:16px; }
 .btn.primary { background:linear-gradient(180deg,var(--violet-2),var(--violet)); color:#fff; border-color:transparent; }
 .btn.secondary { background:transparent; border-color:#565d70; }
 .btn.ghost { background:transparent; }
+.btn.danger { background:rgba(255,122,138,.08); border-color:rgba(255,122,138,.38); color:#ff9aa6; }
 .btn.compact { padding:8px 10px; font-size:.86rem; }
 .btn.big { min-height:54px; font-size:.98rem; }
 .btn:disabled { opacity:.38; cursor:not-allowed; transform:none; }
@@ -162,6 +166,8 @@ legend { color:var(--gold); font-size:.76rem; font-weight:800; padding:0 6px; }
 @media (max-width: 520px) {
   .topbar { display:grid; }
   .top-actions { justify-content:flex-start; }
+  .round-controls { width:100%; justify-content:flex-start; }
+  .round-action-buttons { grid-template-columns:1fr 1fr; flex:1; }
   .ki-grid { grid-template-columns:repeat(3,1fr); }
   .form-grid.two,.cost-grid { grid-template-columns:repeat(3,1fr); }
   .history-item { grid-template-columns:58px 48px 1fr; gap:6px; }

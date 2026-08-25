@@ -29,6 +29,8 @@ No requiere Internet, servidor externo, Node, npm ni instalación de dependencia
 - Opción **Acumulación Plena** que fuerza acumulación completa.
 - Reserva máxima, Ki libre, concentrado y gastado.
 - Avance de asalto con o sin acumulación.
+- Botón **Deshacer** para revertir exactamente el último avance de asalto sin perder las nuevas selecciones de acumulación que hayas corregido después.
+- Botón **Reiniciar combate**: vuelve a Asalto 1, vacía la concentración y el Ki gastado, restaura toda la reserva disponible, cancela mantenidas y limpia el historial sin borrar la configuración del personaje.
 - Técnicas con nivel y coste por característica.
 - Detección automática de si una Técnica puede ejecutarse.
 - Técnicas mantenidas con coste de mantenimiento por asalto.
@@ -47,3 +49,7 @@ No requiere Internet, servidor externo, Node, npm ni instalación de dependencia
 - El mantenimiento y Agon se procesan al avanzar un asalto, incluso si se usa **Avanzar sin acumular**.
 - Si no hay Ki libre suficiente para pagar un mantenimiento completo, la app no hace un pago parcial: lo registra como impagado, avisa y no cancela automáticamente la Técnica para que el usuario decida cómo resolverlo.
 
+
+## Actualización desde GitHub Pages
+
+Esta versión usa la caché `anima-ki-v2`. Al sustituir los archivos en GitHub Pages, el service worker elimina las cachés anteriores al activarse. Si Safari sigue mostrando una versión antigua, cierra y vuelve a abrir la web app o recarga una vez la página.

@@ -29,9 +29,15 @@
             <span class="section-kicker">PERSONAJE</span>
             <input id="characterName" class="character-name" type="text" value="Personaje" aria-label="Nombre del personaje" />
           </div>
-          <div class="round-box">
-            <span>ASALTO</span>
-            <strong id="roundValue">1</strong>
+          <div class="round-controls">
+            <div class="round-box">
+              <span>ASALTO</span>
+              <strong id="roundValue">1</strong>
+            </div>
+            <div class="round-action-buttons">
+              <button id="undoRoundBtn" class="btn ghost compact" type="button" disabled title="Deshace el último avance de asalto. Las selecciones actuales de acumulación se conservan.">↶ Deshacer</button>
+              <button id="resetCombatBtn" class="btn danger compact" type="button">⟲ Reiniciar</button>
+            </div>
           </div>
         </div>
 

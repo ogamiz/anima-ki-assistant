@@ -16,7 +16,7 @@
 
   function defaultState() {
     return {
-      version: 1,
+      version: 2,
       characterName: 'Personaje',
       round: 1,
       characteristics: statObject(10),
@@ -34,7 +34,8 @@
         dailyMax: 80
       },
       techniques: [],
-      history: []
+      history: [],
+      lastRoundUndo: null
     };
   }
 
@@ -59,6 +60,14 @@
       active: Boolean(t.active)
     })) : [];
     s.history = Array.isArray(raw?.history) ? raw.history.slice(0, 200) : [];
+    s.lastRoundUndo = raw?.lastRoundUndo && typeof raw.lastRoundUndo === 'object' ? {
+      round: Math.max(1, Number(raw.lastRoundUndo.round || 1)),
+      accumulated: { ...statObject(0), ...(raw.lastRoundUndo.accumulated || {}) },
+      spentKi: Math.max(0, Number(raw.lastRoundUndo.spentKi || 0)),
+      agonRecoveredToday: Math.max(0, Number(raw.lastRoundUndo.agonRecoveredToday || 0)),
+      history: Array.isArray(raw.lastRoundUndo.history) ? raw.lastRoundUndo.history.slice(0, 200) : []
+    } : null;
+    s.version = 2;
     s.round = Math.max(1, Number(s.round || 1));
     s.totalKi = Math.max(0, Number(s.totalKi || 0));
     s.spentKi = clamp(Number(s.spentKi || 0), 0, s.totalKi);
@@ -200,7 +209,61 @@
     return totalAdded;
   }
 
+  function makeRoundUndoSnapshot() {
+    return {
+      round: state.round,
+      accumulated: { ...state.accumulated },
+      spentKi: state.spentKi,
+      agonRecoveredToday: state.agon.recoveredToday,
+      history: state.history.map(item => ({ ...item }))
+    };
+  }
+
+  function invalidateRoundUndo() {
+    state.lastRoundUndo = null;
+  }
+
+  function undoLastRound() {
+    const snapshot = state.lastRoundUndo;
+    if (!snapshot) {
+      toast('No hay ningún avance de asalto que deshacer.');
+      return;
+    }
+
+    state.round = Math.max(1, Number(snapshot.round || 1));
+    state.accumulated = { ...statObject(0), ...(snapshot.accumulated || {}) };
+    state.spentKi = Math.max(0, Number(snapshot.spentKi || 0));
+    state.agon.recoveredToday = Math.max(0, Number(snapshot.agonRecoveredToday || 0));
+    state.history = Array.isArray(snapshot.history) ? snapshot.history.map(item => ({ ...item })) : [];
+    state.lastRoundUndo = null;
+    commit();
+    toast('Último avance de asalto deshecho.');
+  }
+
+  function resetCombat() {
+    const confirmed = confirm(
+      '¿Reiniciar el combate?\n\n' +
+      '• Asalto volverá a 1.\n' +
+      '• Ki concentrado y gastado volverán a 0.\n' +
+      '• Todo el Ki volverá a estar disponible.\n' +
+      '• Se cancelarán las técnicas mantenidas.\n' +
+      '• Se limpiará el historial.\n\n' +
+      'Se conservarán características, técnicas, reserva máxima, ajustes y el contador diario de Agon.'
+    );
+    if (!confirmed) return;
+
+    state.round = 1;
+    state.accumulated = statObject(0);
+    state.spentKi = 0;
+    state.techniques.forEach(tech => { tech.active = false; });
+    state.history = [];
+    state.lastRoundUndo = null;
+    commit();
+    toast('Combate reiniciado. Todo el Ki está disponible.');
+  }
+
   function advanceRound(withAccumulation) {
+    state.lastRoundUndo = makeRoundUndoSnapshot();
     const currentRound = state.round;
     const insufficient = applyRoundMaintenance(currentRound);
     applyAgon(currentRound);
@@ -222,6 +285,7 @@
     const tech = state.techniques.find(t => t.id === id);
     if (!tech || !canExecute(tech)) return;
 
+    invalidateRoundUndo();
     const cost = sumStats(tech.cost);
     // Executing consumes only the technique cost. Any excess concentration returns to free reserve.
     state.accumulated = statObject(0);
@@ -304,6 +368,7 @@
   function renderControls() {
     $('#characterName').value = state.characterName;
     $('#roundValue').textContent = state.round;
+    $('#undoRoundBtn').disabled = !state.lastRoundUndo;
     $('#fullAccumulationAdvantage').checked = state.fullAccumulationAdvantage;
     $('#agonEnabled').checked = state.agon.enabled;
     $('#agonRecovered').textContent = state.agon.recoveredToday;
@@ -423,7 +488,8 @@
 
   function exportJson() {
     const cleanName = (state.characterName || 'personaje').trim().replace(/[^a-z0-9áéíóúüñ_-]+/gi, '_');
-    const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+    const exportState = { ...state, lastRoundUndo: null };
+    const blob = new Blob([JSON.stringify(exportState, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -460,6 +526,7 @@
 
     const totalBtn = event.target.closest('[data-total-delta]');
     if (totalBtn) {
+      invalidateRoundUndo();
       const minimum = state.spentKi + concentratedKi();
       state.totalKi = Math.max(minimum, state.totalKi + Number(totalBtn.dataset.totalDelta));
       commit(); return;
@@ -501,6 +568,7 @@
   });
 
   $('#maxKiInline').addEventListener('change', e => {
+    invalidateRoundUndo();
     const minimum = state.spentKi + concentratedKi();
     state.totalKi = Math.max(minimum, Number(e.target.value || 0));
     commit();
@@ -518,15 +586,17 @@
   });
 
   $('#agonEnabled').addEventListener('change', e => { state.agon.enabled = e.target.checked; commit(); });
-  $('#resetAgonBtn').addEventListener('click', () => { state.agon.recoveredToday = 0; addHistory(0, 'Reiniciar contador diario de Agon'); commit(); });
+  $('#resetAgonBtn').addEventListener('click', () => { invalidateRoundUndo(); state.agon.recoveredToday = 0; addHistory(0, 'Reiniciar contador diario de Agon'); commit(); });
   $('#accumulateBtn').addEventListener('click', () => advanceRound(true));
   $('#advanceBtn').addEventListener('click', () => advanceRound(false));
+  $('#undoRoundBtn').addEventListener('click', undoLastRound);
+  $('#resetCombatBtn').addEventListener('click', resetCombat);
   $('#addTechniqueBtn').addEventListener('click', () => openTechniqueDialog());
   $('#adjustKiBtn').addEventListener('click', () => { $('#adjustKiForm').reset(); $('#adjustKiDialog').showModal(); });
   $('#exportBtn').addEventListener('click', exportJson);
   $('#importBtn').addEventListener('click', () => $('#importInput').click());
   $('#importInput').addEventListener('change', e => { if (e.target.files?.[0]) importJson(e.target.files[0]); e.target.value = ''; });
-  $('#clearHistoryBtn').addEventListener('click', () => { state.history = []; commit(); });
+  $('#clearHistoryBtn').addEventListener('click', () => { invalidateRoundUndo(); state.history = []; commit(); });
 
   $('#techniqueMaintained').addEventListener('change', e => { $('#maintenanceFieldset').hidden = !e.target.checked; });
 
@@ -555,6 +625,7 @@
     const type = $('input[name="adjustType"]:checked').value;
     const amount = Math.max(1, Number($('#adjustAmount').value || 1));
     const reason = $('#adjustReason').value.trim() || (type === 'spend' ? 'Consumo externo de Ki' : 'Recuperación de Ki');
+    invalidateRoundUndo();
     if (type === 'spend') {
       const spent = spendFromFree(amount, reason);
       if (spent < amount) toast(`Solo había ${spent} Ki libre disponible.`);
